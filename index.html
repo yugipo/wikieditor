@@ -18,7 +18,7 @@
         #toolbar button:disabled{opacity:.4;cursor:default;background:#fff}
         #toolbar input[type=color]{width:36px;height:36px;padding:2px;border:1px solid #dee2e6;border-radius:4px;background:#fff;cursor:pointer}
         #toolbar input[type=text]{width:170px;padding:8px;border:1px solid #dee2e6;border-radius:4px;font-size:13px;font-family:inherit}
-        #toolbar #linkEditUrl{width:320px}
+        #toolbar #linkEditUrl,#toolbar #imgSrc{width:320px}
         .divider{width:1px;height:30px;background:#dee2e6;margin:0 5px}
         .btn-group,.pair{display:flex;gap:5px;flex-wrap:wrap;align-items:center}.pair{gap:2px}
         /* 표·대사·이미지·링크 도구: 클릭했을 때만 툴바 아래에 떠서 표시 (본문이 밀리지 않음) */
@@ -180,6 +180,7 @@
                 <button onclick="imgOp('100%')">100%</button>
                 <button onclick="imgOp('')">원본</button>
                 <span class="pair"><input type="text" id="imgW" placeholder="너비" title="예: 300 (px), 60%"><button onclick="imgOp('custom')">적용</button></span>
+                <span class="pair"><input type="text" id="imgSrc" title="이미지 주소로 바꾸면 HTML 코드가 짧아집니다" onkeydown="if(event.key==='Enter')imgOp('src')"><button onclick="imgOp('src')">주소 변경</button></span>
             </div>
             <div class="btn-group" data-ctx="quote">
                 <span class="label"><i class="bi bi-chat-quote"></i> 대사 박스</span>
@@ -214,8 +215,11 @@
     </div></div>
 
     <div class="modal" id="imageM"><div class="modal-box">
-        <h3>이미지 삽입</h3>
+        <h3 id="imgTitle">이미지 삽입</h3>
+        <input id="imgUrl" placeholder="이미지 주소(URL) — 예: https://blog.kakaocdn.net/…/img.png">
+        <small>주소로 넣으면 HTML에 짧은 주소 한 줄만 들어갑니다.</small>
         <input type="file" id="imgInput" accept="image/*">
+        <small>또는 파일 선택 — 이미지가 HTML 안에 통째로 들어가 코드가 매우 길어집니다.</small>
         <input id="imgAlt" placeholder="이미지 설명">
         <div class="modal-btns"><button class="btn-secondary" onclick="closeModal()">취소</button><button class="btn-primary" onclick="insertImg()">삽입</button></div>
     </div></div>
@@ -672,6 +676,7 @@
         /* ================= 이미지 ================= */
         const imgCellOk=c=>!!c&&wiki.contains(c)&&!c.querySelector('#mainImg');
         function openImageModal(cell){
+            $('imgTitle').textContent='이미지 삽입';
             const caretCell=lastRange&&lastRange.startContainer.isConnected?nodeEl(lastRange.startContainer).closest('td,th'):null;
             imgTarget=imgCellOk(cell)?cell:(imgCellOk(caretCell)?caretCell:null);
             if(!imgTarget&&!getBlockPoint()) return alert('이미지를 넣을 위치(본문 또는 표의 칸)를 먼저 클릭하세요.');
@@ -698,51 +703,55 @@
                 fr.readAsDataURL(file);
             });
         }
-        function insertImg(){
-            const inp=$('imgInput');
-            if(!inp.files[0]) return alert('이미지를 선택하세요');
-            readImage(inp.files[0]).then(src=>{
-                const img=document.createElement('img');
-                img.src=src;
-                img.alt=$('imgAlt').value;
-                if(imgTarget&&imgTarget.isConnected){
-                    // 표의 칸 안에 글자처럼 삽입 → 칸의 정렬을 따름. 칸에 글이 없으면 칸 전체를 차지
-                    const host=caretHost();
-                    let p=host&&imgTarget.contains(host)?host:imgTarget.querySelector(EDITABLE);
-                    if(!p){p=document.createElement('p');p.contentEditable='true';imgTarget.appendChild(p);}
-                    if(cellHosts(imgTarget).every(isBlank)){
-                        img.style.cssText='width:100%;max-width:100%;vertical-align:middle;border-radius:4px;';
-                        p.replaceChildren(img);
-                    }else{
-                        img.style.cssText='max-width:100%;vertical-align:middle;border-radius:4px;';
-                        if(host===p){const rr=lastRange.cloneRange();rr.collapse(false);rr.insertNode(img);}
-                        else p.appendChild(img);
-                    }
+        // 이미지 주소(URL)가 있으면 그 주소를, 없으면 파일을 사용
+        async function insertImg(){
+            const inp=$('imgInput'),url=$('imgUrl').value.trim();
+            if(!url&&!inp.files[0]) return alert('이미지 주소를 넣거나 파일을 선택하세요');
+            const src=url?normUrl(url):await readImage(inp.files[0]);
+            const img=document.createElement('img');
+            img.src=src;
+            img.alt=$('imgAlt').value;
+            if(imgTarget==='main'){
+                img.alt=img.alt||wiki.querySelector('h2').textContent.trim();
+                $('mainImg').replaceChildren(img);
+            }else if(imgTarget&&imgTarget.isConnected){
+                // 표의 칸 안에 글자처럼 삽입 → 칸의 정렬을 따름. 칸에 글이 없으면 칸 전체를 차지
+                const host=caretHost();
+                let p=host&&imgTarget.contains(host)?host:imgTarget.querySelector(EDITABLE);
+                if(!p){p=document.createElement('p');p.contentEditable='true';imgTarget.appendChild(p);}
+                if(cellHosts(imgTarget).every(isBlank)){
+                    img.style.cssText='width:100%;max-width:100%;vertical-align:middle;border-radius:4px;';
+                    p.replaceChildren(img);
                 }else{
-                    img.style.cssText='display:block;max-width:100%;margin:20px 0;border-radius:4px;';
-                    if(!insertBlock(img)) return;
+                    img.style.cssText='max-width:100%;vertical-align:middle;border-radius:4px;';
+                    if(host===p){const rr=lastRange.cloneRange();rr.collapse(false);rr.insertNode(img);}
+                    else p.appendChild(img);
                 }
-                imgTarget=null;inp.value='';$('imgAlt').value='';
-                closeModal();
-            });
+            }else{
+                img.style.cssText='display:block;max-width:100%;margin:20px 0;border-radius:4px;';
+                if(!insertBlock(img)) return;
+            }
+            imgTarget=null;inp.value=$('imgUrl').value=$('imgAlt').value='';
+            closeModal();
         }
+        // 프로필 이미지: 같은 창에서 주소 또는 파일로
         function uploadMainImg(){
             if(!isEdit) return;
-            const inp=document.createElement('input');
-            inp.type='file';inp.accept='image/*';
-            inp.onchange=()=>{
-                if(!inp.files[0]) return;
-                readImage(inp.files[0]).then(src=>{
-                    const img=document.createElement('img');
-                    img.src=src;img.alt=wiki.querySelector('h2').textContent.trim();
-                    $('mainImg').replaceChildren(img);
-                });
-            };
-            inp.click();
+            imgTarget='main';
+            const cur=$('mainImg').querySelector('img');
+            $('imgTitle').textContent='프로필 이미지';
+            $('imgUrl').value=cur&&!cur.src.startsWith('data:')?cur.getAttribute('src'):'';
+            openModal('imageM');
         }
         function imgOp(v){
             const img=ctx.img;
             if(!img||!img.isConnected) return refreshCtx();
+            if(v==='src'){
+                const url=normUrl($('imgSrc').value);
+                if(!url) return alert('이미지 주소를 넣으세요');
+                img.src=url;
+                return;
+            }
             if(v==='custom') v=toSize($('imgW').value);
             img.style.width=v;img.style.height='';img.style.maxWidth='100%';
             $('imgW').value=img.style.width;
@@ -1368,7 +1377,12 @@ document.querySelectorAll('.wiki h3.sec').forEach(function(h){h.addEventListener
             if(ctx.quote){const cs=getComputedStyle(ctx.quote);$('qBg').value=toHex(cs.backgroundColor);$('qChip').value=toHex(cs.borderLeftColor);$('qBorderBtn').textContent=borderLabel(ctx.quote);}
             const img=t.closest('img');
             ctx.img=img&&!img.closest('#mainImg')?img:null;
-            if(ctx.img) $('imgW').value=ctx.img.style.width;
+            if(ctx.img){
+                const src=ctx.img.getAttribute('src')||'',isData=src.startsWith('data:');
+                $('imgW').value=ctx.img.style.width;
+                $('imgSrc').value=isData?'':src;
+                $('imgSrc').placeholder=isData?'파일 이미지 → 주소(URL)로 바꾸면 코드가 짧아짐':'이미지 주소(URL)';
+            }
             ctx.link=userLink(t.closest('a'));
             if(ctx.link) $('linkEditUrl').value=ctx.link.getAttribute('href')||'';
             const cell=t.closest('td,th'),table=cell&&cell.closest('table');
