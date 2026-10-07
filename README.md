@@ -49,15 +49,6 @@
 - **인터넷 연결**: 글꼴(Noto Sans KR), 아이콘, 이미지 저장 기능(html2canvas)은 인터넷에서 불러옵니다.
   인터넷이 없으면 글꼴·아이콘이 기본 모양으로 보이고, 이미지로 저장은 동작하지 않습니다.
 
-## GitHub Pages로 배포하기
-
-1. GitHub에서 새 저장소(Repository)를 만듭니다. 예: `wiki-editor`
-2. 저장소 화면에서 **Add file → Upload files** 를 눌러 이 폴더의 파일(`index.html`, `README.md`, `.nojekyll`)을 올리고 **Commit changes** 를 누릅니다.
-   - `.nojekyll` 은 이름이 점으로 시작해 탐색기에서 안 보일 수 있습니다. 없어도 동작에는 문제가 없습니다.
-3. 저장소의 **Settings → Pages** 로 이동합니다.
-4. **Build and deployment** 의 Source를 **Deploy from a branch** 로, Branch를 **main** / **/(root)** 로 고르고 **Save** 를 누릅니다.
-5. 1~2분 뒤 같은 화면 위쪽에 나오는 주소(`https://<아이디>.github.io/wiki-editor/`)로 접속합니다.
-
 ## 사용한 외부 리소스
 
 - [Noto Sans KR](https://fonts.google.com/noto/specimen/Noto+Sans+KR) (Google Fonts)
