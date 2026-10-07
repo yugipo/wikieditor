@@ -552,11 +552,15 @@
 
         /* ----- 복사한 HTML(티스토리 등)에도 그대로 들어가는 보기용 기능 ----- */
         // 각주 마우스 오버 팝업
+        // 블로그가 각주 주소를 "https://블로그/글#fn1"처럼 바꿔도 인식하도록 '#' 뒤만 사용,
+        // 복사본 CSS가 !important라서 표시/위치도 important로 지정
         function initFnPopup(){
-            var pop=null,t=null;
-            function hide(){if(pop) pop.style.display='none';}
+            var pop=null,t=null,SEL='.wiki sup a[href*="#fn"]';
+            var hashId=function(a){return (a.getAttribute('href')||'').split('#').pop();};
+            var set=function(k,v){pop.style.setProperty(k,v,'important');};
+            function hide(){if(pop) set('display','none');}
             function show(a){
-                var item=document.getElementById(a.getAttribute('href').slice(1));
+                var item=document.getElementById(hashId(a));
                 if(!item) return;
                 var p=(item.closest('p')||item).cloneNode(true);
                 var num=p.querySelector('a[id^="fn"]');if(num) num.remove();
@@ -567,18 +571,18 @@
                     pop.addEventListener('mouseleave',hide);
                 }
                 pop.innerHTML='<b>'+a.textContent+'</b> '+p.innerHTML.trim();
-                pop.style.display='block';
+                set('display','block');
                 var r=a.getBoundingClientRect();
-                pop.style.top=(r.bottom+window.scrollY+6)+'px';
+                set('top',(r.bottom+window.scrollY+6)+'px');
                 var left=r.left+window.scrollX-20,max=window.scrollX+document.documentElement.clientWidth-pop.offsetWidth-8;
-                pop.style.left=Math.max(window.scrollX+8,Math.min(left,max))+'px';
+                set('left',Math.max(window.scrollX+8,Math.min(left,max))+'px');
             }
             document.addEventListener('mouseover',function(e){
-                var a=e.target.closest&&e.target.closest('.wiki sup a[href^="#fn"]');
+                var a=e.target.closest&&e.target.closest(SEL);
                 if(a){clearTimeout(t);show(a);}
             });
             document.addEventListener('mouseout',function(e){
-                var a=e.target.closest&&e.target.closest('.wiki sup a[href^="#fn"]');
+                var a=e.target.closest&&e.target.closest(SEL);
                 if(a) t=setTimeout(hide,250);
             });
         }
@@ -587,9 +591,9 @@
         function initFnJump(){
             var keyOf=function(h){var n=h.querySelector('.sec-num,.toc-num');return ((n?n.textContent:'').match(/\d+/g)||[]).join('.');};
             document.addEventListener('click',function(e){
-                var a=e.target.closest&&e.target.closest('.wiki a[href^="#fn"],.wiki a[href^="#back"]');
+                var a=e.target.closest&&e.target.closest('.wiki a[href*="#fn"],.wiki a[href*="#back"]');
                 if(!a) return;
-                var t=document.getElementById(a.getAttribute('href').slice(1));
+                var t=document.getElementById((a.getAttribute('href')||'').split('#').pop());
                 if(!t) return;
                 e.preventDefault();
                 var body=t.closest('section > div'),h=body&&body.previousElementSibling,delay=0;
