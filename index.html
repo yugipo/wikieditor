@@ -78,6 +78,7 @@
         .wiki blockquote.no-border{border-top:none;border-right:none;border-bottom:none}
         .wiki mark{display:block;background:transparent;color:inherit;border:1px solid gray;border-top:5px solid orange;padding:12px;margin-bottom:20px;font-size:14px;line-height:1.6}
         .wiki mark>.sp-title,.wiki mark>strong{display:block;margin-bottom:1.6em}
+        .wiki mark>.sp-title{font-size:1.2888888889em}
         .wiki mark p{font-size:14px}
         .wiki .toc{max-width:220.538px;border:1px solid #ccc;margin:0 auto 0 0;padding:12px 20px 18px 0;display:inline-block;align-self:flex-start;background:#f9f9f9;border-radius:4px}
         .wiki .toc ol{list-style:none;margin:0 0 0 14px;padding:0}
@@ -217,7 +218,7 @@
     <div class="modal" id="imageM"><div class="modal-box">
         <h3 id="imgTitle">이미지 삽입</h3>
         <input id="imgUrl" placeholder="이미지 주소(URL) — 예: https://blog.kakaocdn.net/…/img.png">
-        <small>주소로 넣으면 HTML에 짧은 주소 한 줄만 들어갑니다.</small>
+        <small>주소로 넣으면 HTML에 짧은 주소 한 줄만 들어갑니다. 티스토리 글에 이미지를 올린 뒤, 이미지를 오른쪽 클릭 → '이미지 주소 복사'로 얻을 수 있습니다.</small>
         <input type="file" id="imgInput" accept="image/*">
         <small>또는 파일 선택 — 이미지가 HTML 안에 통째로 들어가 코드가 매우 길어집니다.</small>
         <input id="imgAlt" placeholder="이미지 설명">
@@ -268,7 +269,7 @@
             <div><p contenteditable="true">성격 설명<sup contenteditable="false" data-locked="1"><a href="#fn1" id="back1">[1]</a></sup>&#8203; 주석 마우스 오버시 팝업</p></div>
 
             <h3 id="3" class="sec"><a href="#toc"><span class="toc-num sec-num" contenteditable="true">3.</span></a> <span class="sec-title" contenteditable="true">작중 행적</span></h3>
-            <div><mark><span class="sp-title" contenteditable="true">이 문서에 <a href="https://namu.wiki/w/%EC%8A%A4%ED%8F%AC%EC%9D%BC%EB%9F%AC" target="_blank" rel="nofollow noopener">스포일러</a>가 포함되어 있습니다.</span><p contenteditable="true">이 문서가 설명하는 작품이나 인물 등에 대한 줄거리, 결말, 반전 요소 등을 직·간접적으로 포함하고 있습니다.</p></mark>
+            <div><mark><span class="sp-title" contenteditable="true">이 문서에 스포일러가 포함되어 있습니다.</span><p contenteditable="true">이 문서가 설명하는 작품이나 인물 등에 대한 줄거리, 결말, 반전 요소 등을 직·간접적으로 포함하고 있습니다.</p></mark>
             <p contenteditable="true">내용 입력</p></div>
 
             <h3 id="3_1" class="sec"><a href="#toc"><span class="toc-num sec-num" contenteditable="true">3.1.</span></a> <span class="sec-title" contenteditable="true">au 설정</span></h3>
@@ -670,7 +671,7 @@
             insertBlock(el);
         }
         const addQuote=()=>addBlock('blockquote','<strong contenteditable="true">"대사를 입력하세요"</strong>');
-        const addSpoiler=()=>addBlock('mark','<span class="sp-title" contenteditable="true">이 문서에 <a href="https://namu.wiki/w/%EC%8A%A4%ED%8F%AC%EC%9D%BC%EB%9F%AC" target="_blank" rel="nofollow noopener">스포일러</a>가 포함되어 있습니다.</span><p contenteditable="true">이 문서가 설명하는 작품이나 인물 등에 대한 줄거리, 결말, 반전 요소 등을 직·간접적으로 포함하고 있습니다.</p>');
+        const addSpoiler=()=>addBlock('mark','<span class="sp-title" contenteditable="true">이 문서에 스포일러가 포함되어 있습니다.</span><p contenteditable="true">이 문서가 설명하는 작품이나 인물 등에 대한 줄거리, 결말, 반전 요소 등을 직·간접적으로 포함하고 있습니다.</p>');
         const addTable=()=>addBlock('table','<tbody><tr><th><p contenteditable="true">항목</p></th><td><p contenteditable="true">값</p></td></tr></tbody>');
 
         /* ================= 이미지 ================= */
@@ -1344,6 +1345,8 @@ document.querySelectorAll('.wiki h3.sec').forEach(function(h){h.addEventListener
                 .forEach(e=>{if(!e.hasAttribute('contenteditable')) e.setAttribute('contenteditable',String(isEdit));});
             wiki.querySelectorAll('sup,a.link-chip').forEach(e=>{e.setAttribute('contenteditable','false');e.dataset.locked='1';});
             const di=wiki.querySelector('section > div > i');if(di) di.classList.add('wiki-date');
+            // 주의문구의 '스포일러' 나무위키 링크 제거 (예전 문서)
+            wiki.querySelectorAll('mark .sp-title a[href*="namu.wiki"]').forEach(x=>x.replaceWith(...x.childNodes));
             const mi=wiki.querySelector('#mainImg');if(mi&&mi.closest('td,th')) mi.closest('td,th').classList.add('img-cell');
             wiki.querySelectorAll('h3.sec.hide').forEach(h=>h.classList.replace('hide','wk-closed'));   // 예전 이름
             const hr=wiki.querySelector('.footnote').previousElementSibling;if(hr&&hr.tagName==='HR') hr.remove();
