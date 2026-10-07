@@ -50,6 +50,8 @@
     </style>
     <!-- 위키 본문 스타일 (복사/다운로드 시 그대로 포함) -->
     <style id="wiki-css">
+        /* 티스토리 본문 영역 배경 */
+        .article_content{background:#fff}
         .wiki{all:initial;display:block;max-width:769.81px;margin:0 auto;font-family:"Noto Sans KR",sans-serif;background:#fff;color:#000}
         .wiki *{box-sizing:border-box}
         .wiki h2{font-size:2.25rem;letter-spacing:-0.1rem;color:#333;margin:0 0 5px}
@@ -138,6 +140,7 @@
         <div class="btn-group edit-only">
             <button onclick="fmt('bold')" title="굵게"><i class="bi bi-type-bold"></i></button>
             <button onclick="fmt('italic')" title="기울임"><i class="bi bi-type-italic"></i></button>
+            <button onclick="fmt('strike')" title="취소선"><i class="bi bi-type-strikethrough"></i></button>
             <select id="fontSize" title="글씨 크기" onchange="fmt('size',this.value);this.value=''">
                 <option value="">글씨 크기</option>
                 <option>10</option><option>12</option><option value="14">14 (기본)</option><option>16</option><option>18</option>
@@ -884,6 +887,10 @@
                     const on=cells.every(c=>cellHosts(c).every(h=>{const cs=getComputedStyle(h);return kind==='bold'?parseInt(cs.fontWeight)>=600:cs.fontStyle==='italic';}));
                     setCellStyle(cells,kind==='bold'?'fontWeight':'fontStyle',on?'normal':kind);
                 }
+                else if(kind==='strike'){
+                    const on=cells.every(c=>cellHosts(c).every(h=>getComputedStyle(h).textDecorationLine.includes('line-through')));
+                    setCellStyle(cells,'textDecoration',on?'none':'line-through');
+                }
                 else if(ALIGN.includes(kind)) setCellStyle(cells,'textAlign',kind,true);
                 else if(kind==='fg') setCellStyle(cells,'color',$('fgColor').value);
                 else if(kind==='bg') setCellStyle(cells,'backgroundColor',$('bgColor').value,true);
@@ -893,6 +900,7 @@
             const host=caretHost(),r=restoreSel();
             document.execCommand('styleWithCSS',false,true);
             if(kind==='bold'||kind==='italic') return document.execCommand(kind);
+            if(kind==='strike') return document.execCommand('strikeThrough');
             if(ALIGN.includes(kind)) return document.execCommand('justify'+kind[0].toUpperCase()+kind.slice(1));
             if(!r||r.collapsed) return alert('적용할 글씨를 드래그하거나, 표의 칸을 드래그해서 선택하세요.');
             if(kind==='fg') document.execCommand('foreColor',false,$('fgColor').value);
