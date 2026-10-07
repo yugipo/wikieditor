@@ -1371,11 +1371,17 @@ document.querySelectorAll('.wiki h3.sec').forEach(function(h){h.addEventListener
                 });
             });
             // 모든 표 칸은 편집 가능한 문단을 가짐
+            // (각주 번호처럼 '편집 잠금' 표시만 있는 칸도 편집 가능하게 — 잠금 표시는 편집 가능 표시로 치지 않음)
             wiki.querySelectorAll('table td, table th').forEach(cell=>{
-                if(cell.querySelector('#mainImg')||cell.querySelector('[contenteditable]')) return;
-                let p=cell.querySelector(':scope > p');
-                if(!p){p=document.createElement('p');p.append(...cell.childNodes);if(!p.childNodes.length) p.innerHTML='<br>';cell.appendChild(p);}
-                p.setAttribute('contenteditable',String(isEdit));
+                if(cell.querySelector('#mainImg')) return;
+                const ps=[...cell.children].filter(c=>c.tagName==='P');
+                if(!ps.length&&!cell.querySelector(EDITABLE)){
+                    const p=document.createElement('p');
+                    p.append(...cell.childNodes);
+                    if(!p.childNodes.length) p.innerHTML='<br>';
+                    cell.appendChild(p);ps.push(p);
+                }
+                ps.forEach(p=>{if(!p.hasAttribute('contenteditable')) p.setAttribute('contenteditable',String(isEdit));});
             });
         }
 
