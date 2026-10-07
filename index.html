@@ -119,6 +119,7 @@
         <button class="edit-only" onclick="redo()" id="redoBtn" title="앞으로가기 (Ctrl+Y)"><i class="bi bi-arrow-clockwise"></i> 앞으로가기</button>
         <button onclick="copyCode()"><i class="bi bi-clipboard"></i> 복사</button>
         <button onclick="downloadCode()"><i class="bi bi-download"></i> 다운로드</button>
+        <button onclick="openModal('importM')"><i class="bi bi-folder2-open"></i> 불러오기</button>
         <button onclick="saveImage()" id="imgSaveBtn"><i class="bi bi-camera"></i> 이미지로 저장</button>
         <div class="divider edit-only"></div>
         <div class="btn-group edit-only">
@@ -215,6 +216,14 @@
         <input type="file" id="imgInput" accept="image/*">
         <input id="imgAlt" placeholder="이미지 설명">
         <div class="modal-btns"><button class="btn-secondary" onclick="closeModal()">취소</button><button class="btn-primary" onclick="insertImg()">삽입</button></div>
+    </div></div>
+
+    <div class="modal" id="importM"><div class="modal-box">
+        <h3>HTML 불러오기</h3>
+        <input type="file" id="importFile" accept=".html,.htm,text/html">
+        <textarea id="importText" placeholder="또는 복사한 HTML을 여기에 붙여넣기"></textarea>
+        <small>이 편집기에서 복사·다운로드한 HTML(티스토리 HTML 편집 화면에서 다시 복사한 내용도 가능)을 불러와 이어서 편집합니다.</small>
+        <div class="modal-btns"><button class="btn-secondary" onclick="closeModal()">취소</button><button class="btn-primary" onclick="importHTML()">불러오기</button></div>
     </div></div>
 
     <div class="modal" id="linkM"><div class="modal-box">
@@ -317,12 +326,12 @@
             el.textContent=re.test(el.textContent)?el.textContent.replace(re,now):'최근 수정: '+now;
             return true;
         }
-        function record(){
+        function record(noStamp){
             clearTimeout(hist.timer);hist.timer=null;
             let s=snap();
             const prev=hist.stack[hist.idx];
             if(s===prev) return;
-            if(prev!==undefined&&s.replace(DATE_RE,'$1$2')!==prev.replace(DATE_RE,'$1$2')&&stampDate()){
+            if(!noStamp&&prev!==undefined&&s.replace(DATE_RE,'$1$2')!==prev.replace(DATE_RE,'$1$2')&&stampDate()){
                 s=snap();mo.takeRecords();
             }
             hist.stack=hist.stack.slice(0,hist.idx+1).concat(s).slice(-80);
@@ -1288,9 +1297,41 @@ document.querySelectorAll('.wiki h3.sec').forEach(function(h){h.addEventListener
             }
         }
 
+        /* ================= HTML 불러오기 ================= */
+        // 복사·다운로드한 HTML에서 위키 부분만 꺼내 편집기로 되돌림
+        async function importHTML(){
+            const f=$('importFile').files[0];
+            const src=f?await f.text():$('importText').value.trim();
+            if(!src) return alert('파일을 고르거나 HTML을 붙여넣으세요.');
+            const w=new DOMParser().parseFromString(src,'text/html').querySelector('#wiki-root, .wiki');
+            if(!w||!w.querySelector('section')) return alert('위키 내용을 찾지 못했습니다. 이 편집기에서 복사·다운로드한 HTML인지 확인해 주세요.');
+            if(!confirm('지금 편집 중인 내용을 불러온 내용으로 바꿀까요?\n(바꾼 뒤에도 뒤로가기로 되돌릴 수 있습니다)')) return;
+            // 안전: 스크립트·이벤트 속성 제거
+            w.querySelectorAll('script,iframe,object,embed').forEach(e=>e.remove());
+            w.querySelectorAll('*').forEach(e=>[...e.attributes].forEach(a=>{if(/^on/i.test(a.name)) e.removeAttribute(a.name);}));
+            // 블로그용으로 붙였던 !important 제거 (편집기 서식 도구가 다시 바꿀 수 있게)
+            w.querySelectorAll('[style]').forEach(e=>e.setAttribute('style',e.getAttribute('style').replace(/\s*!important/gi,'')));
+            // 블로그가 바꿔 놓은 각주 주소(https://…#fn1) → #fn1
+            w.querySelectorAll('a[href*="#fn"],a[href*="#back"]').forEach(a=>a.setAttribute('href','#'+a.getAttribute('href').split('#').pop()));
+            flushHistory();
+            wiki.innerHTML=w.innerHTML;
+            const ph=wiki.querySelector('#mainImg .ph');if(ph&&!ph.textContent.trim()) ph.textContent='이미지를 클릭하여 업로드';
+            normalize();
+            renumberFootnotes();
+            rebuildToc();
+            hideDel();refreshCtx();
+            mo.takeRecords();record(true);   // 불러온 문서의 수정 날짜는 그대로 유지
+            $('importFile').value=$('importText').value='';
+            closeModal();
+        }
+
         /* ================= 불러온 저장본 정리 ================= */
         function normalize(){
             clearTemp(wiki);
+            // 편집 가능 표시가 빠진 부분(복사·다운로드한 HTML) 복구
+            wiki.querySelectorAll('h2,section > div > i,section > span,.sec-num,.sec-title,h3.sec + div > p,blockquote > strong,mark > .sp-title,mark > strong,mark > p,.footnote p > span')
+                .forEach(e=>{if(!e.hasAttribute('contenteditable')) e.setAttribute('contenteditable',String(isEdit));});
+            wiki.querySelectorAll('sup,a.link-chip').forEach(e=>{e.setAttribute('contenteditable','false');e.dataset.locked='1';});
             const di=wiki.querySelector('section > div > i');if(di) di.classList.add('wiki-date');
             wiki.querySelectorAll('h3.sec.hide').forEach(h=>h.classList.replace('hide','wk-closed'));   // 예전 이름
             const hr=wiki.querySelector('.footnote').previousElementSibling;if(hr&&hr.tagName==='HR') hr.remove();
