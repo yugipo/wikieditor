@@ -134,7 +134,8 @@
         .wiki mark{display:block;background:transparent;color:inherit;border:1px solid gray;border-top:5px solid orange;padding:12px;margin-bottom:20px;font-size:15px;line-height:1.6}
         .wiki mark>.sp-title,.wiki mark>strong{display:block;margin-bottom:1.6em}
         .wiki mark>.sp-title{font-size:1.2888888889em}
-        .wiki mark p{font-size:15px}
+        .wiki mark>.sp-body{display:block}   /* 설명은 문단(p) 대신 span: 블로그 편집기가 주의문구(mark) 안의 문단을 밖으로 쪼개지 않게 */
+        .wiki mark p,.wiki mark .sp-body{font-size:15px}
         .wiki ul.wk-list{margin:0 0 0 1.4em;padding:0;list-style:disc outside;font-size:15px;line-height:1.6}
         .wiki ul.wk-list li{margin:0;padding:0}
         .wiki .toc{flex:0 1 auto;max-width:max(160px,calc(100% - 517.78px));overflow-wrap:anywhere;border:1px solid #ccc;margin:0 auto 0 0;padding:12px 20px 18px 0;display:inline-block;align-self:flex-start}   /* 상단 표 옆 남는 너비까지만 넓어지고, 더 긴 제목은 줄바꿈 */
@@ -341,7 +342,7 @@
             <div><p contenteditable="true">성격 설명<sup contenteditable="false" data-locked="1"><a href="#fn1" id="back1">[1]</a></sup>&#8203; 주석 마우스 오버시 팝업</p></div>
 
             <h3 id="3" class="sec"><a href="#toc"><span class="toc-num sec-num" contenteditable="true">3.</span></a> <span class="sec-title" contenteditable="true">작중 행적</span></h3>
-            <div><mark><span class="sp-title" contenteditable="true">이 문서에 스포일러가 포함되어 있습니다.</span><p contenteditable="true">이 문서가 설명하는 작품이나 인물 등에 대한 줄거리, 결말, 반전 요소 등을 직·간접적으로 포함하고 있습니다.</p></mark>
+            <div><mark><span class="sp-title" contenteditable="true">이 문서에 스포일러가 포함되어 있습니다.</span><span class="sp-body" contenteditable="true">이 문서가 설명하는 작품이나 인물 등에 대한 줄거리, 결말, 반전 요소 등을 직·간접적으로 포함하고 있습니다.</span></mark>
             <p contenteditable="true">내용 입력</p></div>
 
             <h3 id="3_1" class="sec"><a href="#toc"><span class="toc-num sec-num" contenteditable="true">3.1.</span></a> <span class="sec-title" contenteditable="true">au 설정</span></h3>
@@ -921,7 +922,7 @@
             return el;
         }
         const addQuote=()=>addBlock('blockquote','<strong contenteditable="true">"대사를 입력하세요"</strong>');
-        const addSpoiler=()=>addBlock('mark','<span class="sp-title" contenteditable="true">이 문서에 스포일러가 포함되어 있습니다.</span><p contenteditable="true">이 문서가 설명하는 작품이나 인물 등에 대한 줄거리, 결말, 반전 요소 등을 직·간접적으로 포함하고 있습니다.</p>');
+        const addSpoiler=()=>addBlock('mark','<span class="sp-title" contenteditable="true">이 문서에 스포일러가 포함되어 있습니다.</span><span class="sp-body" contenteditable="true">이 문서가 설명하는 작품이나 인물 등에 대한 줄거리, 결말, 반전 요소 등을 직·간접적으로 포함하고 있습니다.</span>');
         // 접기: [ 펼치기 · 접기 ] 를 누르면 내용이 열리고 닫힘 (복사한 HTML에서는 닫힌 채로 시작, 스크립트 없이 동작)
         // 글씨([ 펼치기 · 접기 ])는 직접 고칠 수 있음. 편집 모드에서는 앞의 ▾/▸ 를 눌러 여닫음
         function makeFold(){
@@ -2105,6 +2106,18 @@ document.querySelectorAll('.wiki h3.sec').forEach(function(h){h.addEventListener
                 b.setAttribute('contenteditable',String(isEdit));
                 [...b.children].forEach(markIsland);
             });
+            // 주의문구: 블로그 편집기가 <mark> 안의 문단을 밖으로 빼내고 <mark>를 겹쳐 놓은 경우 다시 하나로
+            for(let m;(m=wiki.querySelector('mark > mark'));) m.replaceWith(...m.childNodes);
+            wiki.querySelectorAll('mark').forEach(m=>{
+                if(!m.querySelector(':scope > .sp-title')||m.querySelector(':scope > p, :scope > .sp-body')) return;
+                const nx=m.nextElementSibling;
+                if(nx&&nx.tagName==='P') m.appendChild(nx);
+            });
+            wiki.querySelectorAll('mark > p').forEach(x=>{   // 예전 구조(<p>) → <span class="sp-body">
+                const sp=document.createElement('span');
+                [...x.attributes].forEach(a=>sp.setAttribute(a.name,a.value));
+                sp.classList.add('sp-body');sp.append(...x.childNodes);x.replaceWith(sp);
+            });
             // 대사 박스: 블로그 편집기가 <p>·<span> 등으로 감싸 놓은 경우 → 글을 다시 <strong> 하나로 모음 (편집 가능하게)
             wiki.querySelectorAll('blockquote').forEach(q=>{
                 const kids=[...q.childNodes].filter(n=>n.nodeType===1||n.textContent.trim());
@@ -2123,7 +2136,7 @@ document.querySelectorAll('.wiki h3.sec').forEach(function(h){h.addEventListener
                 q.replaceChildren(st);
             });
             // 편집 가능 표시가 빠진 부분(복사·다운로드한 HTML) 복구
-            wiki.querySelectorAll('h2,section > div > i,section > span,.sec-num,.sec-title,h3.sec + div > p,details.wk-fold > div > p,blockquote > strong,details.wk-fold > summary > .wk-fold-label,tr.wk-rf-head .wk-fold-label,mark > .sp-title,mark > strong,mark > p,.footnote p > span,ul.wk-list')
+            wiki.querySelectorAll('h2,section > div > i,section > span,.sec-num,.sec-title,h3.sec + div > p,details.wk-fold > div > p,blockquote > strong,details.wk-fold > summary > .wk-fold-label,tr.wk-rf-head .wk-fold-label,mark > .sp-title,mark > strong,mark > .sp-body,.footnote p > span,ul.wk-list')
                 .forEach(e=>{if(!e.hasAttribute('contenteditable')) e.setAttribute('contenteditable',String(isEdit));});
             wiki.querySelectorAll('sup,a.link-chip').forEach(e=>{e.setAttribute('contenteditable','false');e.dataset.locked='1';});
             const di=wiki.querySelector('section > div > i');if(di) di.classList.add('wiki-date');
