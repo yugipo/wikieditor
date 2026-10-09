@@ -2138,8 +2138,11 @@ document.querySelectorAll('.wiki h3.sec').forEach(function(h){h.addEventListener
                 [...box.children].forEach(ch=>{
                     if(!/^(P|DIV)$/.test(ch.tagName)||ch.hasAttribute('contenteditable')||ch.id==='mainImg'||ch.querySelector('[contenteditable],#mainImg')) return;
                     if(isBlank(ch)&&!ch.querySelector('br')) return ch.remove();
+                    // 문단은 그대로 두고 편집 표시만 (서식 style 유지), <div>는 서식을 옮겨 문단으로
+                    if(ch.tagName==='P') return ch.setAttribute('contenteditable',String(isEdit));
                     const p=document.createElement('p');
                     p.setAttribute('contenteditable',String(isEdit));
+                    if(ch.getAttribute('style')) p.setAttribute('style',ch.getAttribute('style'));
                     p.append(...ch.childNodes);
                     ch.replaceWith(p);
                 });
