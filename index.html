@@ -26,7 +26,21 @@
         /* 색 고르기 창 (모든 색 도구 공용) */
         #cpop{position:fixed;z-index:3000;width:244px;background:#fff;border:1px solid #ccc;border-radius:6px;box-shadow:0 6px 24px rgba(0,0,0,.25);padding:0 0 10px;font:13px "Noto Sans KR",sans-serif;user-select:none;-webkit-user-select:none}
         #cpop[hidden]{display:none}
-        #cpop .cp-sv{position:relative;height:140px;border-radius:6px 6px 0 0;touch-action:none;cursor:crosshair}
+        #cpop .cp-pal{display:grid;grid-template-columns:repeat(10,20px);gap:2px;justify-content:center;padding:12px 12px 0}
+        #cpop .cp-pal button{width:20px;height:20px;padding:0;border:1px solid rgba(0,0,0,.15);border-radius:3px;cursor:pointer}
+        #cpop .cp-pal button:hover{transform:scale(1.15)}
+        #cpop .cp-pal button.sel{box-shadow:0 0 0 2px #fff,0 0 0 3.5px #2f7de1}
+        #cpop .cp-more{display:block;width:calc(100% - 24px);margin:10px 12px 0;padding:6px;border:1px solid #dee2e6;background:#f8f9fa;border-radius:4px;cursor:pointer;font:12px "Noto Sans KR",sans-serif;color:#333}
+        #cpop .cp-more:hover{background:#e9ecef}
+        /* 배경색 '없음' (글씨 배경색에만 표시) */
+        #cpop .cp-none{display:flex;align-items:center;gap:6px;width:calc(100% - 24px);margin:12px 12px -4px;padding:4px 6px;border:1px solid #dee2e6;background:#fff;border-radius:4px;cursor:pointer;font:12px "Noto Sans KR",sans-serif;color:#333}
+        #cpop .cp-none[hidden]{display:none}
+        #cpop .cp-none:hover{background:#f1f3f5}
+        #cpop .cp-none.sel{border-color:#2f7de1;box-shadow:0 0 0 1px #2f7de1}
+        #cpop .cp-none span,.cp-input.none{background:linear-gradient(to top right,#fff 45%,#e03131 45% 55%,#fff 55%) !important}
+        #cpop .cp-none span{width:16px;height:16px;border:1px solid rgba(0,0,0,.2);border-radius:3px}
+        #cpop .cp-adv[hidden]{display:none}
+        #cpop .cp-sv{position:relative;height:140px;margin:10px 12px 0;border-radius:4px;touch-action:none;cursor:crosshair}
         #cpop .cp-knob{position:absolute;width:14px;height:14px;margin:-7px 0 0 -7px;border:2px solid #fff;border-radius:50%;box-shadow:0 0 0 1.5px #000;pointer-events:none}
         #cpop .cp-row{display:flex;align-items:center;gap:10px;padding:12px 12px 6px}
         #cpop .cp-eye{border:none;background:none;font-size:18px;padding:0 2px;cursor:pointer}
@@ -38,19 +52,38 @@
         #cpop .cp-nums label.hex{flex:1.6}
         #cpop .cp-nums input{width:100%;padding:6px 2px;border:1px solid #ccc;border-radius:4px;text-align:center;font:inherit;-moz-appearance:textfield}
         #cpop .cp-nums input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-        #cpop .cp-chips{display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px 0;margin-top:8px;border-top:1px solid #eee}
-        #cpop .cp-chips button{width:22px;height:22px;padding:0;border:1px solid rgba(0,0,0,.25);border-radius:4px;cursor:pointer;touch-action:manipulation}
-        #cpop .cp-chips button.add{background:#fff;border:1.5px dashed #888;color:#555;font-size:16px;line-height:18px}
+        #cpop .cp-chips{display:grid;grid-template-columns:repeat(10,20px);gap:2px;justify-content:center;padding:2px 12px 0}   /* 기본 색상표 바로 아랫줄에 같은 크기로 */
+        #cpop .cp-chips button{width:20px;height:20px;padding:0;border:1px solid rgba(0,0,0,.25);border-radius:4px;cursor:pointer;touch-action:manipulation}
+        #cpop .cp-chips button.add{background:#fff;border:1.5px dashed #888;color:#555;font-size:14px;line-height:16px}
         #cpop .cp-chips button.sel{box-shadow:0 0 0 2px #fff,0 0 0 3.5px #2f7de1}
-        #cpop .cp-hint{padding:6px 12px 0;color:#888;font-size:11px;line-height:1.4}
         #toolbar input[type=text]{width:170px;padding:8px;border:1px solid #dee2e6;border-radius:4px;font-size:13px;font-family:inherit}
         #toolbar #linkEditUrl,#toolbar #imgSrc{width:320px}
         .divider{width:1px;height:30px;background:#dee2e6;margin:0 5px}
+        /* 좁은 화면: 상단바 버튼을 조금 작게, 구분선 숨김 */
+        @media(max-width:1199px){
+            #toolbar{gap:6px;padding:8px 10px}
+            #toolbar .btn-group{gap:4px}
+            #toolbar .divider{display:none}
+            #toolbar button,#toolbar select{padding:5px 8px;font-size:13px}
+            #toolbar .fsz button{padding:5px 8px}
+            #toolbar .fsz input{width:36px;font-size:13px}
+            #toolbar button.cp-input{width:31px;height:31px}
+            #toolbar input[type=text]{padding:5px 8px;font-size:12px}
+        }
+        @media(max-width:767px){
+            #toolbar input[type=text]{width:76px}
+            #toolbar #linkEditUrl,#toolbar #imgSrc{width:160px}
+            #ctxTools .hint{font-size:11px}
+        }
+        /* 상단바의 각 묶음은 한 줄로 (넘치면 스크립트가 묶음 전체를 비율대로 축소) */
+        #toolbar>.btn-group,#ctxTools>.btn-group{flex-wrap:nowrap}
+        #toolbar>.btn-group>*,#ctxTools>.btn-group>*{flex-shrink:0}
+        #toolbar .btn-group.wrapped>.divider{display:none}   /* 줄 맨 앞으로 내려간 묶음의 구분선은 숨김 */
         .btn-group,.pair{display:flex;gap:5px;flex-wrap:wrap;align-items:center}.pair{gap:2px}
         /* 표·대사·이미지·링크 도구: 클릭했을 때만 툴바 아래에 떠서 표시 (본문이 밀리지 않음) */
-        #ctxTools{display:none;position:absolute;left:0;right:0;top:100%;background:#fff;border-bottom:1px solid #dee2e6;box-shadow:0 4px 10px rgba(0,0,0,.08);padding:8px 20px;flex-direction:column;gap:6px}
+        #ctxTools{display:none;position:absolute;left:0;right:0;top:100%;background:#fff;border-bottom:1px solid #dee2e6;box-shadow:0 4px 10px rgba(0,0,0,.08);padding:8px 20px;flex-flow:row wrap;gap:6px 10px}
         #ctxTools .label{font-size:13px;font-weight:700;color:#af0505;margin-right:6px}
-        #ctxTools .hint{font-size:12px;color:#888}
+        #ctxTools .hint{font-size:12px;color:#888;flex-basis:100%}
         .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center}
         .modal.show{display:flex}
         .modal-box{background:#fff;border-radius:8px;padding:30px;width:90%;max-width:500px;box-shadow:0 4px 20px rgba(0,0,0,.15)}
@@ -74,7 +107,7 @@
         .wiki .cell-sel{box-shadow:inset 0 0 0 2px #2f7de1;background-image:linear-gradient(rgba(47,125,225,.18),rgba(47,125,225,.18))}
         .wiki.cell-dragging,.wiki.cell-dragging *{user-select:none}
         .wiki .fn-flash{background:#fff3a0;transition:background .3s}
-        @media(max-width:767px){#toolbar{padding:10px}#ctxTools{padding:8px 10px}}
+        @media(max-width:767px){#ctxTools{padding:8px 10px}}
     </style>
     <!-- 위키 본문 스타일 (복사/다운로드 시 그대로 포함) -->
     <style id="wiki-css">
@@ -173,6 +206,7 @@
 </head>
 <body>
     <div id="toolbar">
+        <div class="btn-group">
         <button onclick="toggleEdit()" id="editBtn"><i class="bi bi-pencil-square"></i> 편집</button>
         <button onclick="openModal('importM')"><i class="bi bi-folder2-open"></i> 불러오기</button>
         <button onclick="save()"><i class="bi bi-cloud-check"></i> 저장</button>
@@ -180,8 +214,9 @@
         <button onclick="downloadCode()"><i class="bi bi-download"></i> 다운로드</button>
         <button onclick="saveImage()" id="imgSaveBtn"><i class="bi bi-camera"></i> 이미지 저장</button>
         <button onclick="saveWord()" id="wordBtn" title="워드(.docx) 파일 — 구글 문서에서도 열 수 있음"><i class="bi bi-file-earmark-word"></i> 워드 저장</button>
-        <div class="divider edit-only"></div>
+        </div>
         <div class="btn-group edit-only">
+            <div class="divider"></div>
             <button onclick="undo()" id="undoBtn" title="뒤로가기 (Ctrl+Z)"><i class="bi bi-arrow-counterclockwise"></i></button>
             <button onclick="redo()" id="redoBtn" title="앞으로가기 (Ctrl+Y)"><i class="bi bi-arrow-clockwise"></i></button>
             <button onclick="openModal('sectionM')"><i class="bi bi-plus"></i> 섹션</button>
@@ -193,16 +228,16 @@
             <button onclick="openImageModal(ctx.table&&ctx.table.anchor)" title="본문의 커서 위치, 또는 선택한 표 칸에 이미지 삽입"><i class="bi bi-image"></i> 이미지</button>
             <button onclick="openLinkModal()"><i class="bi bi-link-45deg"></i> 링크</button>
         </div>
-        <div class="divider edit-only"></div>
         <div class="btn-group edit-only">
+            <div class="divider"></div>
             <button onclick="fmt('bold')" title="굵게"><i class="bi bi-type-bold"></i></button>
             <button onclick="fmt('italic')" title="기울임"><i class="bi bi-type-italic"></i></button>
             <button onclick="fmt('underline')" title="밑줄"><i class="bi bi-type-underline"></i></button>
             <button onclick="fmt('strike')" title="취소선"><i class="bi bi-type-strikethrough"></i></button>
             <button onclick="toggleList()" title="글머리 기호 (다시 누르면 해제)"><i class="bi bi-list-ul"></i></button>
             <span class="fsz" title="글씨 크기(px) · 기본 15"><button onclick="sizeStep(-1)" title="글씨 작게">−</button><input type="number" id="fontSize" min="6" max="96" value="15" inputmode="numeric" title="숫자를 쓰고 Enter" onkeydown="if(event.key==='Enter'){event.preventDefault();fmt('size',this.value);}"><button onclick="sizeStep(1)" title="글씨 크게">+</button></span>
-            <span class="pair"><button type="button" class="cp-input" id="fgColor" value="#af0505" title="글씨 색 선택"></button><button onclick="fmt('fg')"><i class="bi bi-fonts"></i> 글씨색</button></span>
-            <span class="pair"><button type="button" class="cp-input" id="bgColor" value="#fff3a0" title="배경 색 선택"></button><button onclick="fmt('bg')"><i class="bi bi-paint-bucket"></i> 배경색</button></span>
+            <span class="pair"><button type="button" class="cp-input" id="fgColor" value="#000000" title="글씨 색 선택"></button><button onclick="fmt('fg')"><i class="bi bi-fonts"></i> 글씨색</button></span>
+            <span class="pair"><button type="button" class="cp-input" id="bgColor" value="#ffffff" title="배경 색 선택"></button><button onclick="fmt('bg')"><i class="bi bi-paint-bucket"></i> 배경색</button></span>
             <button onclick="fmt('left')" title="왼쪽 정렬"><i class="bi bi-text-left"></i></button>
             <button onclick="fmt('center')" title="가운데 정렬"><i class="bi bi-text-center"></i></button>
             <button onclick="fmt('right')" title="오른쪽 정렬"><i class="bi bi-text-right"></i></button>
@@ -216,9 +251,9 @@
                 <button onclick="tblOp('addCol')" title="열 추가">+열</button>
                 <button onclick="tblOp('delRow')" title="행 삭제">−행</button>
                 <button onclick="tblOp('delCol')" title="열 삭제">−열</button>
-                <button onclick="tblOp('mergeRow')" title="선택한 칸을 위아래로 합치기">행 합치기</button>
-                <button onclick="tblOp('mergeCol')" title="선택한 칸을 좌우로 합치기">열 합치기</button>
-                <button onclick="tblOp('split')">합치기 해제</button>
+                <button onclick="tblOp('merge')" id="mergeBtn" title="드래그한 칸들을 한 칸으로 합치기 · 합친 칸을 선택하고 다시 누르면 해제">합치기</button>
+            </div>
+            <div class="btn-group" data-ctx="table">
                 <span class="pair"><button type="button" class="cp-input" id="cellBg" value="#ffffff" title="칸 배경색"></button><button onclick="tblOp('cellBg')" title="선택한 칸 배경색">칸</button></span>
                 <span class="pair"><button type="button" class="cp-input" id="tblBorder" value="#000000" title="표 테두리색"></button><button onclick="tblOp('border')" title="표 테두리색">테두리</button></span>
                 <button onclick="tblOp('delTable')"><i class="bi bi-trash"></i> 표 삭제</button>
@@ -229,8 +264,8 @@
                 <span class="pair"><input type="text" id="colW" title="선택한 열의 너비. 예: 120 (px), 30%"><button onclick="tblOp('colWidth')">적용</button></span>
                 <span class="pair"><input type="text" id="rowH" title="선택한 행의 높이. 예: 40 (px)"><button onclick="tblOp('rowHeight')">적용</button></span>
                 <button onclick="tblOp('fit')" id="fitBtn" title="화면 너비가 바뀌어도 표의 비율을 유지하고, 글씨·여백·이미지도 같은 비율로 줄이거나 늘림">비율 고정</button>
-                <span class="hint">숫자만 쓰면 px, 비우고 적용하면 자동 · 여러 칸을 드래그하면 글씨/색/크기/정렬 버튼이 선택한 칸 전체에 적용됩니다</span>
             </div>
+            <div class="hint" data-ctx="table">숫자만 쓰면 px, 비우고 적용하면 자동 · 여러 칸을 드래그하면 글씨/색/크기/정렬 버튼이 선택한 칸 전체에 적용됩니다</div>
             <div class="btn-group" data-ctx="img">
                 <span class="label"><i class="bi bi-image"></i> 이미지 크기</span>
                 <button onclick="imgOp('25%')">25%</button>
@@ -259,6 +294,11 @@
     <div id="notice" class="edit-only"><strong>💡 팁:</strong> 각주·대사·주의문구·표·이미지·링크는 본문에서 커서를 둔 위치에 삽입됩니다. 글씨를 드래그하고 링크를 누르면 그 글씨에, 드래그 없이 누르면 # 링크칩이 생깁니다. 이미 넣은 링크는 클릭하면 주소를 바꾸거나 해제할 수 있습니다. 섹션 번호를 클릭해 수정하면 목차가 번호 순으로 정렬됩니다. 섹션 제목·대사·주의문구·표·이미지에 마우스를 올리면 ✕ 버튼으로 삭제할 수 있습니다.</div>
     <button id="blockDel" title="삭제">✕</button>
     <div id="cpop" hidden>
+        <button type="button" class="cp-none" hidden title="글씨 배경색 지우기"><span></span>없음</button>
+        <div class="cp-pal"></div>
+        <div class="cp-chips"></div>
+        <button type="button" class="cp-more">다른 색 고르기 ▾</button>
+        <div class="cp-adv" hidden>
         <div class="cp-sv"><div class="cp-knob"></div></div>
         <div class="cp-row">
             <button type="button" class="cp-eye" title="화면에서 색 가져오기"><i class="bi bi-eyedropper"></i></button>
@@ -271,8 +311,7 @@
             <label><input type="number" min="0" max="255" inputmode="numeric">B</label>
             <label class="hex"><input type="text" maxlength="7" spellcheck="false">HEX</label>
         </div>
-        <div class="cp-chips"></div>
-        <div class="cp-hint">＋ 칸을 누르면 지금 색이 칩으로 등록됩니다 · 칩을 길게 누르거나 우클릭하면 삭제</div>
+        </div>
     </div>
 
     <div class="modal" id="sectionM"><div class="modal-box">
@@ -386,6 +425,7 @@
             flushHistory();
             isEdit=!isEdit;
             document.body.classList.toggle('editing',isEdit);
+            if($('toolbar').markGroups) $('toolbar').markGroups();
             $('editBtn').innerHTML=isEdit?'<i class="bi bi-eye"></i> 보기':'<i class="bi bi-pencil-square"></i> 편집';
             $('editBtn').classList.toggle('active',isEdit);
             wiki.setAttribute('data-edit',isEdit);
@@ -481,6 +521,22 @@
         {
             const el=cp.el,sv=el.querySelector('.cp-sv'),svK=sv.firstElementChild,hue=el.querySelector('.cp-hue'),hueK=hue.firstElementChild;
             const nums=[...el.querySelectorAll('.cp-nums input')],hexIn=nums.pop(),now=el.querySelector('.cp-now'),chips=el.querySelector('.cp-chips');
+            // 기본 색상표 (회색조 + 10가지 색 × 밝기 6단계). 누르면 그 색을 고르고 창을 닫음
+            const noneBtn=el.querySelector('.cp-none');
+            noneBtn.onclick=()=>{if(cp.target) cp.target.value='transparent';closePicker();};
+            const pal=el.querySelector('.cp-pal'),adv=el.querySelector('.cp-adv'),more=el.querySelector('.cp-more');
+            const PALETTE=['#000000','#434343','#666666','#999999','#b7b7b7','#cccccc','#d9d9d9','#efefef','#f3f3f3','#ffffff',
+                '#980000','#ff0000','#ff9900','#ffff00','#00ff00','#00ffff','#4a86e8','#0000ff','#9900ff','#ff00ff',
+                '#e6b8af','#f4cccc','#fce5cd','#fff2cc','#d9ead3','#d0e0e3','#c9daf8','#cfe2f3','#d9d2e9','#ead1dc',
+                '#dd7e6b','#ea9999','#f9cb9c','#ffe599','#b6d7a8','#a2c4c9','#a4c2f4','#9fc5e8','#b4a7d6','#d5a6bd',
+                '#cc4125','#e06666','#f6b26b','#ffd966','#93c47d','#76a5af','#6d9eeb','#6fa8dc','#8e7cc3','#c27ba0',
+                '#a61c00','#cc0000','#e69138','#f1c232','#6aa84f','#45818e','#3c78d8','#3d85c6','#674ea7','#a64d79',
+                '#85200c','#990000','#b45f06','#bf9000','#38761d','#134f5c','#1155cc','#0b5394','#351c75','#741b47'];
+            pal.innerHTML=PALETTE.map(c=>`<button type="button" data-c="${c}" style="background:${c}" title="${c}"></button>`).join('');
+            pal.addEventListener('click',e=>{const b=e.target.closest('[data-c]');if(b){setHex(b.dataset.c);closePicker();}});
+            // 다른 색 고르기: 상세 화면(색 영역·색상 막대·RGB·HEX) 펼치기/접기
+            const showAdv=on=>{adv.hidden=!on;more.textContent=on?'다른 색 고르기 ▴':'다른 색 고르기 ▾';};
+            more.onclick=()=>{showAdv(adv.hidden);cp.place();};
             const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
             const toRgb=(h,s,v)=>{const f=n=>{const k=(n+h/60)%6;return Math.round(255*(v-v*s*Math.max(0,Math.min(k,4-k,1))));};return [f(5),f(3),f(1)];};
             const toHex=rgb=>'#'+rgb.map(x=>x.toString(16).padStart(2,'0')).join('');
@@ -500,12 +556,13 @@
                 nums.forEach((n,i)=>{if(n!==skip) n.value=rgb[i];});
                 if(hexIn!==skip) hexIn.value=hx;
                 if(cp.target) cp.target.value=hx;
-                chips.querySelectorAll('[data-c]').forEach(b=>b.classList.toggle('sel',b.dataset.c===hx));
+                el.querySelectorAll('.cp-chips [data-c],.cp-pal [data-c]').forEach(b=>b.classList.toggle('sel',b.dataset.c===hx));
+                noneBtn.classList.remove('sel');
             }
             const setHex=(hx,skip)=>{[cp.h,cp.s,cp.v]=fromHex(hx);paint(skip);};
             cp.drawChips=()=>{
-                chips.innerHTML=colorChips.map(c=>`<button type="button" data-c="${c}" style="background:${c}" title="${c}"></button>`).join('')
-                    +'<button type="button" class="add" title="지금 색을 칩으로 등록">+</button>';
+                chips.innerHTML=colorChips.map(c=>`<button type="button" data-c="${c}" style="background:${c}" title="${c} · 길게 누르거나 우클릭하면 삭제"></button>`).join('')
+                    +'<button type="button" class="add" title="지금 색을 내 컬러칩으로 등록">+</button>';
                 paint();
             };
             // 끌어서 고르기 (마우스·터치 공용)
@@ -542,20 +599,52 @@
                 if(press&&press.done&&press.b===b){press=null;return;}
                 press=null;
                 if(b.classList.contains('add')) setChips([...colorChips.filter(c=>c!==cur()),cur()]);
-                else setHex(b.dataset.c);
+                else{setHex(b.dataset.c);if(adv.hidden) closePicker();}   // 색상표 화면에서는 고르면 바로 닫힘
             });
             chips.addEventListener('contextmenu',e=>{const b=e.target.closest('[data-c]');if(!b) return;e.preventDefault();endPress();setChips(colorChips.filter(c=>c!==b.dataset.c));});
             // 본문 선택이 풀리지 않게 (숫자 입력칸 제외)
             el.addEventListener('mousedown',e=>{if(!e.target.closest('input')) e.preventDefault();});
             cp.open=btn=>{
                 if(cp.target===btn&&!el.hidden) return closePicker();
-                cp.target=btn;el.hidden=false;
-                setHex(COLOR_RE.test(btn.value)?btn.value.toLowerCase():'#000000');
-                cp.drawChips();
-                const r=btn.getBoundingClientRect(),w=el.offsetWidth,h=el.offsetHeight;
+                el.hidden=false;showAdv(false);
+                const none=btn.value==='transparent';
+                cp.target=none?null:btn;   // '없음'일 때는 창을 열기만 해서 값이 바뀌지 않게
+                noneBtn.hidden=btn.id!=='bgColor';
+                setHex(COLOR_RE.test(btn.value)?btn.value.toLowerCase():none?'#ffffff':'#000000');
+                cp.drawChips();cp.target=btn;
+                noneBtn.classList.toggle('sel',none);cp.place();
+            };
+            // 색 버튼 아래(공간이 없으면 위)에 화면 밖으로 나가지 않게
+            cp.place=()=>{
+                if(!cp.target) return;
+                const r=cp.target.getBoundingClientRect(),w=el.offsetWidth,h=el.offsetHeight;
                 el.style.left=clamp(r.left,8,innerWidth-w-8)+'px';
                 el.style.top=(r.bottom+6+h<=innerHeight||r.top-h-6<8?clamp(r.bottom+6,8,innerHeight-h-8):r.top-h-6)+'px';
             };
+        }
+        // 상단바 묶음이 다음 줄로 내려가면 앞의 구분선을 숨김
+        {
+            // 묶음이 상단바 너비보다 넓으면 묶음 전체를 줄여서 한 줄에 맞춤
+            const tb=$('toolbar');let lastW=0;
+            const mark=()=>{
+                const gs=[...tb.querySelectorAll(':scope>.btn-group')];
+                // 상단바와 표·대사·이미지·링크 도구줄 모두
+                [tb,$('ctxTools')].forEach(box=>{
+                    const cs=getComputedStyle(box),avail=box.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
+                    const bg=[...box.querySelectorAll(':scope>.btn-group')];
+                    bg.forEach(g=>g.style.zoom='');
+                    // 같은 줄 묶음끼리 버튼 크기가 같도록 가장 많이 줄여야 하는 비율로 통일
+                    const z=avail>0?Math.min(1,...bg.filter(g=>g.offsetWidth).map(g=>Math.floor(avail/g.scrollWidth*1000)/1000)):1;
+                    if(z<1) bg.forEach(g=>g.style.zoom=z);
+                });
+                gs.forEach(g=>{
+                    g.classList.remove('wrapped');const pv=g.previousElementSibling;
+                    if(pv&&pv.offsetWidth&&g.offsetTop>pv.offsetTop+pv.offsetHeight/2) g.classList.add('wrapped');
+                });
+            };
+            tb.markGroups=mark;
+            if(document.fonts){document.fonts.ready.then(mark);document.fonts.addEventListener('loadingdone',mark);}   // 아이콘 글꼴이 늦게 불러와져 버튼 너비가 바뀌는 경우
+            new ResizeObserver(()=>{if(tb.clientWidth!==lastW){lastW=tb.clientWidth;mark();}}).observe(tb);
         }
         function closePicker(){cp.el.hidden=true;cp.target=null;}
         document.addEventListener('pointerdown',e=>{if(!cp.el.hidden&&!e.target.closest('#cpop,.cp-input')) closePicker();});
@@ -565,7 +654,7 @@
         {
             const d=Object.getOwnPropertyDescriptor(HTMLButtonElement.prototype,'value');
             document.querySelectorAll('.cp-input').forEach(b=>{
-                Object.defineProperty(b,'value',{get(){return d.get.call(this);},set(v){d.set.call(this,v);this.style.background=v;}});
+                Object.defineProperty(b,'value',{get(){return d.get.call(this);},set(v){d.set.call(this,v);this.style.background=v;this.classList.toggle('none',v==='transparent');}});
                 b.value=b.getAttribute('value');
                 b.addEventListener('click',()=>cp.open(b));
             });
@@ -583,6 +672,8 @@
             if(!n||!wiki.contains(n)||!n.isContentEditable) return;   // 본문 밖(툴바 등)을 누른 동안은 그대로 유지
             const ft=n.closest('table.wk-fit');   // 비율 고정 표는 기준 크기로 표시
             $('fontSize').value=Math.round(parseFloat(getComputedStyle(n).fontSize)*(ft?fitScale(ft):1));
+            // 커서·드래그한 글씨의 글씨색·배경색을 색 버튼에 표시 (색 창을 여는 중에는 그대로)
+            if(cp.el.hidden){$('fgColor').value=toHex(getComputedStyle(n).color);$('bgColor').value=hiliteOf(n);}
             FMT_STATE.forEach(([k,cmd])=>{
                 let on=false;try{on=document.queryCommandState(cmd);}catch(e){}
                 $('toolbar').querySelector(`[onclick="fmt('${k}')"]`).classList.toggle('on',on);
@@ -1260,7 +1351,7 @@
                 }
                 else if(ALIGN.includes(kind)) setCellStyle(cells,'textAlign',kind,true);
                 else if(kind==='fg') setCellStyle(cells,'color',$('fgColor').value);
-                else if(kind==='bg') setCellStyle(cells,'backgroundColor',$('bgColor').value,true);
+                else if(kind==='bg') setCellStyle(cells,'backgroundColor',$('bgColor').value==='transparent'?'':$('bgColor').value,true);
                 else if(kind==='size') setCellStyle(cells,'fontSize',val+'px');
                 return;
             }
@@ -1271,7 +1362,16 @@
             if(ALIGN.includes(kind)) return document.execCommand('justify'+kind[0].toUpperCase()+kind.slice(1));
             if(!r||r.collapsed) return alert('적용할 글씨를 드래그하거나, 표의 칸을 드래그해서 선택하세요.');
             if(kind==='fg') document.execCommand('foreColor',false,$('fgColor').value);
-            if(kind==='bg') document.execCommand('hiliteColor',false,$('bgColor').value);
+            if(kind==='bg'){
+                const none=$('bgColor').value==='transparent';
+                document.execCommand('hiliteColor',false,none?'rgb(1, 2, 3)':$('bgColor').value);
+                // 없음: 임시 색을 칠한 뒤 그 배경을 지우고, 빈 span은 풀어줌
+                if(none) host.querySelectorAll('span[style]').forEach(sp=>{
+                    if(sp.style.backgroundColor!=='rgb(1, 2, 3)') return;
+                    sp.style.backgroundColor='';
+                    if(!sp.getAttribute('style')){sp.removeAttribute('style');if(!sp.attributes.length) sp.replaceWith(...sp.childNodes);}
+                });
+            }
             if(kind==='size'){
                 document.execCommand('fontSize',false,'7');
                 host.querySelectorAll('font[size="7"],span[style*="xxx-large"]').forEach(s=>{
@@ -1282,6 +1382,11 @@
         }
 
         /* ================= 대사 박스 ================= */
+        // 실제로 보이는 배경색: 투명이면 바깥 요소로 올라가며 찾음 (없으면 흰색)
+        const solidHex=c=>{const m=(c||'').match(/[\d.]+/g);return m&&m.length>=3&&!(m.length>3&&+m[3]===0)?toHex(c):null;};
+        // 글씨 배경색: 글씨에 직접 칠한 색만 (문단·표 칸·박스의 배경은 제외, 없으면 흰색)
+        function hiliteOf(el){for(let e=el;e&&getComputedStyle(e).display.startsWith('inline');e=e.parentElement){const c=solidHex(getComputedStyle(e).backgroundColor);if(c) return c;}return '#ffffff';}
+        function bgOf(el){for(let e=el;e&&e!==document.body;e=e.parentElement){const c=solidHex(getComputedStyle(e).backgroundColor);if(c) return c;}return '#ffffff';}
         function toHex(c){
             const m=(c||'').match(/\d+(\.\d+)?/g);
             return m&&m.length>=3?'#'+m.slice(0,3).map(x=>(+x|0).toString(16).padStart(2,'0')).join(''):'#000000';
@@ -1314,6 +1419,9 @@
                 const cg=t.querySelector('colgroup'),cell=m.grid[r.r1]&&m.grid[r.r1][r.c1],row=m.rows[r.r1];
                 const px=el=>el?Math.round(el.getBoundingClientRect()[el===row?'height':'width']):0;
                 $('tblW').value=t.style.width;
+                // 선택한 칸의 배경색·표 테두리색을 색 버튼에 표시
+                if(cp.el.hidden&&cell){$('cellBg').value=bgOf(cell.el);$('tblBorder').value=toHex(getComputedStyle(cell.el).borderTopColor);}
+                $('mergeBtn').classList.toggle('on',mergedOnly(m,r));
                 $('fitBtn').textContent=t.classList.contains('wk-fit')?'비율 고정 해제':'비율 고정';
                 $('fitBtn').classList.toggle('active',t.classList.contains('wk-fit'));
                 $('colW').value=(cg&&cg.children[r.c1]?cg.children[r.c1].style.width:cell&&cell.el.style.width)||'';
@@ -1325,6 +1433,7 @@
             let any=false;
             document.querySelectorAll('#ctxTools [data-ctx]').forEach(g=>{const on=!!ctx[g.dataset.ctx];g.style.display=on?'flex':'none';any=any||on;});
             $('ctxTools').style.display=any?'flex':'none';
+            if(any&&$('toolbar').markGroups) $('toolbar').markGroups();
         }
 
         /* ================= 표 편집 (rowspan/colspan을 격자 모델로 계산) ================= */
@@ -1345,9 +1454,9 @@
             return {rows,grid,cells,nCols:Math.max(0,...grid.map(g=>g.length))};
         }
         function writeTable(t,m){
-            // 시작 칸이 없는 빈 행/열 정리
-            for(let r=m.rows.length-1;r>=0;r--) if(!m.cells.some(c=>c.r0===r)) deleteLines(m,'r',r,r);
-            for(let j=Math.max(-1,...m.cells.map(c=>c.c1));j>=0;j--) if(!m.cells.some(c=>c.c0===j)) deleteLines(m,'c',j,j);
+            // 어떤 칸도 걸쳐 있지 않은 빈 행/열 정리 (합친 칸이 덮고 있는 행·열은 합치기 해제 때 되살리도록 유지)
+            for(let r=m.rows.length-1;r>=0;r--) if(!m.cells.some(c=>c.r0<=r&&c.r1>=r)) deleteLines(m,'r',r,r);
+            for(let j=Math.max(-1,...m.cells.map(c=>c.c1));j>=0;j--) if(!m.cells.some(c=>c.c0<=j&&c.c1>=j)) deleteLines(m,'c',j,j);
             if(!m.cells.length){t.remove();return false;}
             // 행마다 원래 있던 묶음(tbody)에 그대로 (행 접기 유지). 새 행은 바로 앞 행의 묶음으로
             const body=t.tBodies[0]||t.appendChild(document.createElement('tbody'));
@@ -1474,6 +1583,11 @@
             m.cells=m.cells.filter(c=>c===keep||!inside.includes(c));
             Object.assign(keep,{r0:r.r1,r1:r.r2,c0:r.c1,c1:r.c2});
         }
+        // 선택 범위가 합쳐진 칸 하나와 정확히 같은지
+        function mergedOnly(m,r){
+            const cs=m.cells.filter(c=>inRect(c,r));
+            return cs.length===1&&(cs[0].r1>cs[0].r0||cs[0].c1>cs[0].c0);
+        }
         function splitRect(m,r){
             m.cells.filter(c=>inRect(c,r)&&(c.r1>c.r0||c.c1>c.c0)).forEach(c=>{
                 let memo=[];try{memo=JSON.parse(c.el.dataset.split||'[]');}catch(e){}
@@ -1552,15 +1666,12 @@
                 case 'delCol':
                     if(r.c2-r.c1+1>=m.nCols&&!confirm('모든 열이 삭제되어 표가 사라집니다. 계속할까요?')) return;
                     deleteLines(m,'c',r.c1,r.c2); ctx.table.rect=one; break;
-                case 'mergeRow':
-                    if(r.r1===r.r2) return alert('위아래로 합칠 칸들을 드래그해서 선택하세요.');
-                    for(let j=r.c1;j<=r.c2;j++) mergeRect(m,{r1:r.r1,r2:r.r2,c1:j,c2:j});
+                // 합치기: 드래그한 범위를 한 칸으로. 합친 칸 하나만 선택된 상태(버튼이 어두움)에서 누르면 해제
+                case 'merge':
+                    if(mergedOnly(m,r)){splitRect(m,r);break;}
+                    if(m.cells.filter(c=>inRect(c,r)).length<2) return alert('합칠 칸들을 드래그해서 선택하세요.');
+                    mergeRect(m,r);
                     break;
-                case 'mergeCol':
-                    if(r.c1===r.c2) return alert('좌우로 합칠 칸들을 드래그해서 선택하세요.');
-                    for(let i=r.r1;i<=r.r2;i++) mergeRect(m,{r1:i,r2:i,c1:r.c1,c2:r.c2});
-                    break;
-                case 'split': splitRect(m,r); break;
                 case 'cellBg': return m.cells.filter(c=>inRect(c,r)).forEach(c=>c.el.style.backgroundColor=$('cellBg').value);
                 case 'border':{
                     const v=$('tblBorder').value;
