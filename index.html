@@ -101,7 +101,7 @@
         .wiki [contenteditable]:focus,.wiki [contenteditable]:focus-visible{outline:none}
         .wiki[data-edit="true"] .sec-num{outline:1px dashed #0275d8;outline-offset:2px;padding:0 2px;cursor:text}
         .wiki[data-edit="true"] .main-img{cursor:pointer}
-        .wiki[data-edit="true"] h3+div.wk-empty{display:block}
+        .wiki[data-edit="true"] h3+div.wk-empty,.wiki[data-edit="true"] div.wk-top.wk-empty{display:block}
         .wiki[data-edit="true"] p.wk-tail{display:block}   /* 편집 중에는 끝의 빈 줄도 보여서 입력 가능 */   /* 편집 중에는 빈 본문도 보여서 입력 가능 */
         .wiki .block-hover{outline:2px dashed #af0505;outline-offset:2px}
         .wiki .img-sel{outline:3px solid #2f7de1;outline-offset:2px}
@@ -141,8 +141,9 @@
         .wiki h3.sec[data-depth="3"]{font-size:20px}
         .wiki h3.sec[data-depth="4"],.wiki h3.sec[data-depth="5"]{font-size:18px}
         .wiki .wk-sub-hidden{display:none !important}
-        .wiki h3+div.wk-empty{display:none}
+        .wiki h3+div.wk-empty,.wiki div.wk-top.wk-empty{display:none}
         .wiki p.wk-tail{display:none}   /* 본문 맨 끝의 빈 줄은 보기·복사·저장에서 숨김 */
+        .wiki div.wk-top{margin:15px}   /* 분류 아래 본문 칸 */
         .wiki h3+div{margin:15px;max-height:10000px;opacity:1;transition:all 0.3s}
         .wiki h3.wk-closed+div{max-height:0;opacity:0;overflow:hidden}
         .wiki blockquote{background:#eee;border:2px dashed #ccc;border-left:5px solid #af0505;margin:0 0 20px;padding:1em;display:block;width:fit-content;max-width:100%;text-align:justify;font-size:15px;line-height:normal}   /* 긴 대사도 오른쪽 끝이 고르게 */
@@ -157,6 +158,7 @@
         .wiki[data-edit="true"] details.wk-fold>summary{cursor:default}
         /* 편집 모드: 섹션 본문은 하나의 칸으로 표시, 칸 아래쪽 빈 곳을 눌러도 이어 쓰기·삽입 가능 */
         .wiki[data-edit="true"] h3.sec:not(.wk-closed)+div{outline:1px dashed #d0d7de;outline-offset:6px;padding-bottom:14px;min-height:1.5em;cursor:text}
+        .wiki[data-edit="true"] div.wk-top{outline:1px dashed #d0d7de;outline-offset:6px;padding-bottom:14px;min-height:1.5em;cursor:text}
         .wiki[data-edit="true"] details.wk-fold>div{outline:1px dashed #e3e7eb;outline-offset:2px;padding-bottom:10px;cursor:text}
         /* 행 단위 접기: 접을 행들 위에 [ 펼치기 · 접기 ] 칸(선택한 열 너비)이 있는 행. 같은 data-rf 행들을 숨김.
            (예전 방식: tbody.wk-rowfold 로 묶은 것도 계속 지원) */
@@ -199,7 +201,7 @@
         .wiki-fn-pop b,.wiki-fn-pop a{color:#0275d8}
         /* 좁은 화면: 상단 표를 화면 너비에 맞추고 목차는 그 아래 왼쪽에 */
         @media(max-width:767px){
-            .wiki h3,.wiki section>span,.wiki .info{margin-left:10px;margin-right:10px}
+            .wiki h3,.wiki section>span,.wiki .info,.wiki div.wk-top{margin-left:10px;margin-right:10px}
             .wiki .info{flex-direction:column}
             .wiki .info table{flex:none;width:100%;max-width:min(100%,497.78px);min-width:0}   /* 좁은 화면에서도 최대 너비는 그대로 */
             .wiki .toc{flex:none;max-width:100%}
@@ -361,6 +363,7 @@
                 <i class="wiki-date" contenteditable="true">최근 수정: 2026-10-10 00:00:00</i>
             </div>
             <span contenteditable="true">분류: <a href="#">이름 │ 분류</a></span>
+            <div class="wk-top"><p contenteditable="true"><br></p></div>
             <div class="info">
                 <table><colgroup><col><col></colgroup><tbody>
                     <tr><th colspan="2"><p contenteditable="true">이름</p></th></tr>
@@ -418,7 +421,7 @@
         const normUrl=u=>{u=u.trim();return !u||/^[a-z][a-z0-9+.-]*:/i.test(u)||/^[#/]/.test(u)?u:'https://'+u;};
         const secBody=h=>{const b=h&&h.nextElementSibling;return b&&b.tagName==='DIV'&&!b.classList.contains('footnote')?b:null;};
         // 본문 칸: 섹션 내용 칸, 또는 접기의 내용 칸 (접기 안에서도 표·이미지·대사 등 모든 삽입 기능 사용)
-        const inSecBody=b=>{const d=b.parentElement;return !!d&&d.tagName==='DIV'&&(!!d.previousElementSibling&&d.previousElementSibling.matches('h3.sec')||d.matches('details.wk-fold > div'));};
+        const inSecBody=b=>{const d=b.parentElement;return !!d&&d.tagName==='DIV'&&(!!d.previousElementSibling&&d.previousElementSibling.matches('h3.sec')||d.matches('details.wk-fold > div, div.wk-top'));};
 
         let isEdit=false,lastRange=null,drag=null,delTarget=null,imgTarget=null,mo=null;
         // 현재 클릭해서 선택된 대상 (표는 {table,anchor,rect})
@@ -771,7 +774,9 @@
             // 본문이 비어 있는 섹션(글·이미지·표·대사·주의문구 없음)은 본문 칸을 숨겨 빈 공간을 없앰
             var empty=function(b){return !b.textContent.replace(/[\s\u200B]/g,'')&&!b.querySelector('img,table,blockquote,mark,hr,iframe,video');};
             // 본문(접기 내용 포함) 맨 끝의 아무것도 없는 빈 줄은 보기에서 숨김
-            Array.prototype.forEach.call(document.querySelectorAll('.wiki h3.sec + div, .wiki details.wk-fold > div'),function(b){
+            var top=document.querySelector('.wiki div.wk-top');
+            if(top){if(empty(top)) top.classList.add('wk-empty'); else top.classList.remove('wk-empty');}
+            Array.prototype.forEach.call(document.querySelectorAll('.wiki h3.sec + div, .wiki details.wk-fold > div, .wiki div.wk-top'),function(b){
                 var tail=true;
                 Array.prototype.slice.call(b.children).reverse().forEach(function(c){
                     if(tail&&c.tagName==='P'&&!c.textContent.replace(/[\s\u200B]/g,'')&&!c.querySelector('img,sup,iframe,video')) c.classList.add('wk-tail');
@@ -987,6 +992,7 @@
             const near=cell&&fb?(fb.contains(cell)?cell:fb):(cell||fb);
             if(inCell&&cell&&near===cell&&wiki.contains(cell)&&!cell.querySelector('#mainImg')) return at(cell);   // 표의 칸 안
             if(fb&&wiki.contains(fb)&&(near===fb||!inCell)) return at(fb);   // 접기 안
+            const tp=n.closest('div.wk-top');if(tp&&wiki.contains(tp)) return at(tp);   // 분류 아래 본문 칸
             const h=n.closest('h3.sec');
             if(h){const b=secBody(h);return b?{body:b,after:null}:null;}
             const body=n.closest('section > div');
@@ -1283,6 +1289,8 @@
             if(img&&!img.closest('#mainImg')&&(img.closest('td,th')||inSecBody(img))) return img;
             const h=n.closest('h3.sec');
             if(h) return h;
+            const cat=n.closest('section > span');   // 맨 위 분류 칸
+            if(cat&&cat.parentElement.parentElement===wiki) return cat;
             const b=n.closest('blockquote,mark,table,details.wk-fold');   // 가장 가까운 것 (접기 안의 표 / 표 칸 안의 접기)
             return b&&(b.matches('details.wk-fold')||inSecBody(b)||b.parentElement.parentElement.matches('details.wk-fold'))?b:null;
         }
@@ -1317,7 +1325,7 @@
         delBtn.addEventListener('click',()=>{
             const b=delTarget;hideDel();
             if(!b) return;
-            const msg=b.matches('h3')?`섹션 "${(b.querySelector('.sec-title')||b).textContent.trim()}"과(와) 그 내용을 삭제할까요?`:'이 블록을 삭제할까요?';
+            const msg=b.matches('h3')?`섹션 "${(b.querySelector('.sec-title')||b).textContent.trim()}"과(와) 그 내용을 삭제할까요?`:b.matches('section > span')?'분류 칸을 삭제할까요?\n(뒤로가기로 되돌릴 수 있습니다)':'이 블록을 삭제할까요?';
             if(confirm(msg)) removeBlock(b);
         });
 
@@ -2144,6 +2152,8 @@ document.querySelectorAll('.wiki h3.sec').forEach(function(h){h.addEventListener
             if(txt('.wiki-date')) children.push(new D.Paragraph({children:[new D.TextRun({text:txt('.wiki-date'),color:'555555',size:20})],spacing:{after:200}}));
             const cat=wiki.querySelector('section > span');
             if(cat) children.push(para(cat,{border:{top:{style:D.BorderStyle.SINGLE,size:4,color:'CCCCCC',space:4},bottom:{style:D.BorderStyle.SINGLE,size:4,color:'CCCCCC',space:4},left:{style:D.BorderStyle.SINGLE,size:4,color:'CCCCCC',space:4},right:{style:D.BorderStyle.SINGLE,size:4,color:'CCCCCC',space:4}},shading:shade('F9F9F9'),spacing:{after:240}}));
+            const top=wiki.querySelector('div.wk-top');
+            if(top&&!top.classList.contains('wk-empty')) children.push(...blocks(top));
             // 상단 표 → 목차 → 섹션 순서 (워드는 나란히 배치를 지원하지 않음)
             const info=wiki.querySelector('.info table');
             if(info) children.push(tableOf(info,Math.round(PAGE_W*0.62)),new D.Paragraph(''));
@@ -2230,8 +2240,14 @@ document.querySelectorAll('.wiki h3.sec').forEach(function(h){h.addEventListener
                 }
             });
             // 본문 칸(섹션 본문·접기 내용)은 하나의 입력칸, 안의 표·대사·주의문구·접기는 덩어리
-            wiki.querySelectorAll('h3.sec + div, details.wk-fold > div').forEach(b=>{
-                if(b.matches('section > div')&&!(b.previousElementSibling&&b.previousElementSibling.matches('h3.sec'))) return;
+            // 분류 아래 본문 칸 (예전 문서에는 없으므로 만들어 줌)
+            if(!wiki.querySelector('div.wk-top')){
+                const cat=wiki.querySelector('section > span'),tp=document.createElement('div');
+                tp.className='wk-top';tp.innerHTML='<p contenteditable="true"><br></p>';
+                if(cat) cat.after(tp); else{const info=wiki.querySelector('.info');if(info) info.before(tp);}
+            }
+            wiki.querySelectorAll('h3.sec + div, details.wk-fold > div, div.wk-top').forEach(b=>{
+                if(b.matches('section > div:not(.wk-top)')&&!(b.previousElementSibling&&b.previousElementSibling.matches('h3.sec'))) return;
                 b.setAttribute('contenteditable',String(isEdit));
                 [...b.children].forEach(markIsland);
             });
@@ -2265,7 +2281,7 @@ document.querySelectorAll('.wiki h3.sec').forEach(function(h){h.addEventListener
                 q.replaceChildren(st);
             });
             // 편집 가능 표시가 빠진 부분(복사·다운로드한 HTML) 복구
-            wiki.querySelectorAll('h2,section > div > i,section > span,.sec-num,.sec-title,h3.sec + div > p,details.wk-fold > div > p,blockquote > strong,details.wk-fold > summary > .wk-fold-label,tr.wk-rf-head .wk-fold-label,mark > .sp-title,mark > strong,mark > .sp-body,.footnote p > span,ul.wk-list')
+            wiki.querySelectorAll('h2,section > div > i,section > span,.sec-num,.sec-title,h3.sec + div > p,div.wk-top > p,details.wk-fold > div > p,blockquote > strong,details.wk-fold > summary > .wk-fold-label,tr.wk-rf-head .wk-fold-label,mark > .sp-title,mark > strong,mark > .sp-body,.footnote p > span,ul.wk-list')
                 .forEach(e=>{if(!e.hasAttribute('contenteditable')) e.setAttribute('contenteditable',String(isEdit));});
             wiki.querySelectorAll('sup,a.link-chip').forEach(e=>{e.setAttribute('contenteditable','false');e.dataset.locked='1';});
             const di=wiki.querySelector('section > div > i');if(di) di.classList.add('wiki-date');
@@ -2276,7 +2292,7 @@ document.querySelectorAll('.wiki h3.sec').forEach(function(h){h.addEventListener
             const hr=wiki.querySelector('.footnote').previousElementSibling;if(hr&&hr.tagName==='HR') hr.remove();
             // 예전에 엔터로 만든 줄이 저장/불러오기 과정에서 편집 영역 밖으로 빠진 것 복구
             wiki.querySelectorAll('section > div, details.wk-fold > div, table td, table th').forEach(box=>{
-                if(box.matches('section > div')&&!(box.previousElementSibling&&box.previousElementSibling.matches('h3.sec'))) return;
+                if(box.matches('section > div:not(.wk-top)')&&!(box.previousElementSibling&&box.previousElementSibling.matches('h3.sec'))) return;
                 [...box.children].forEach(ch=>{
                     if(!/^(P|DIV)$/.test(ch.tagName)||ch.hasAttribute('contenteditable')||ch.id==='mainImg'||ch.querySelector('[contenteditable],#mainImg')) return;
                     if(isBlank(ch)&&!ch.querySelector('br')) return ch.remove();
@@ -2308,7 +2324,7 @@ document.querySelectorAll('.wiki h3.sec').forEach(function(h){h.addEventListener
         // 클릭 대상 선택 (표 칸 드래그 선택 포함)
         /* 섹션 본문(과 접기 안)은 하나의 칸: 칸 안의 빈 곳(블록 사이·맨 아래)을 눌러도 그 자리에 커서가 놓임
            → 표·이미지·대사 등 모든 삽입이 항상 그 본문 칸 안에 생성됨 */
-        const bodyBox=el=>el&&el.matches&&wiki.contains(el)&&(el.matches('h3.sec + div')||el.matches('details.wk-fold > div'))?el:null;
+        const bodyBox=el=>el&&el.matches&&wiki.contains(el)&&el.matches('h3.sec + div, details.wk-fold > div, div.wk-top')?el:null;
         wiki.addEventListener('mousedown',e=>{
             if(!isEdit||e.button!==0) return;
             const box=bodyBox(e.target);if(!box) return;
