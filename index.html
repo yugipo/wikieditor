@@ -97,6 +97,8 @@
         #notice{background:#fff3cd;border:1px solid #ffc107;border-radius:4px;padding:10px 15px;margin:12px;font-size:13px;color:#856404}
         #blockDel{position:absolute;display:none;z-index:900;width:26px;height:26px;border:none;border-radius:50%;background:#af0505;color:#fff;cursor:pointer;font-size:16px;line-height:26px;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.3)}
         .wiki [id]{scroll-margin-top:110px}
+        /* 입력 중 브라우저가 그리는 검은 포커스 테두리(선) 없앰 — 본문 칸·섹션 번호의 점선 표시는 아래 규칙이 그대로 유지 */
+        .wiki [contenteditable]:focus,.wiki [contenteditable]:focus-visible{outline:none}
         .wiki[data-edit="true"] .sec-num{outline:1px dashed #0275d8;outline-offset:2px;padding:0 2px;cursor:text}
         .wiki[data-edit="true"] .main-img{cursor:pointer}
         .wiki[data-edit="true"] h3+div.wk-empty{display:block}
@@ -408,6 +410,7 @@
         // 안쪽 문단은 따로 포커스를 받지 않으므로 실제 입력칸(가장 바깥 편집 영역)에 포커스
         function focusHost(el){let h=el;while(h.parentElement&&h.parentElement.isContentEditable) h=h.parentElement;if(h.focus) h.focus({preventScroll:true});}
         const selHost=()=>{const s=getSelection();if(!s.rangeCount) return null;const n=nodeEl(s.anchorNode);return n&&n.closest?n.closest('[contenteditable="true"]'):null;};
+        let composing=false;   // 한글 등 입력기 조합 중
         const TEMP=['cell-sel','block-hover','fn-flash','img-sel','link-sel'];   // 화면 표시용 임시 클래스
         const dropClass=(el,...c)=>{el.classList.remove(...c);if(!el.classList.length) el.removeAttribute('class');};
         const clearTemp=root=>root.querySelectorAll(TEMP.map(c=>'.'+c).join()).forEach(e=>dropClass(e,...TEMP));
@@ -457,6 +460,7 @@
         }
         function record(noStamp){
             clearTimeout(hist.timer);hist.timer=null;
+            if(composing) return;   // 조합 중 문서를 고치면(날짜 갱신 등) 조합 밑줄이 남음 → 조합이 끝난 뒤 기록
             if(wiki.querySelectorAll('table.wk-fit').length){wiki.querySelectorAll('table.wk-fit').forEach(fitToEm);mo.takeRecords();}
             let s=snap();
             const prev=hist.stack[hist.idx];
@@ -643,7 +647,9 @@
                 });
             };
             tb.markGroups=mark;
-            if(document.fonts){document.fonts.ready.then(mark);document.fonts.addEventListener('loadingdone',mark);}   // 아이콘 글꼴이 늦게 불러와져 버튼 너비가 바뀌는 경우
+            // 한글 입력 중 새 글자 모양(글꼴 조각)을 불러올 때마다 다시 계산하지 않도록, 조합이 끝난 뒤 한 번만
+            let ft=0;const later=()=>{clearTimeout(ft);ft=setTimeout(()=>composing?later():mark(),300);};
+            if(document.fonts){document.fonts.ready.then(mark);document.fonts.addEventListener('loadingdone',later);}   // 아이콘 글꼴이 늦게 불러와져 버튼 너비가 바뀌는 경우
             new ResizeObserver(()=>{if(tb.clientWidth!==lastW){lastW=tb.clientWidth;mark();}}).observe(tb);
         }
         function closePicker(){cp.el.hidden=true;cp.target=null;}
@@ -664,8 +670,10 @@
 
         /* 굵게·기울임·밑줄·취소선: 선택한 글씨에 적용돼 있으면 버튼을 어둡게 */
         const FMT_STATE=[['bold','bold'],['italic','italic'],['underline','underline'],['strike','strikeThrough']];
+        let lastColorKey=null,lastCellKey={};
         function updFmtState(){
             const sel=getSelection();
+            if(composing) return;   // 한글 조합 중에는 툴바도 건드리지 않음 (조합이 끝나면 다시 갱신)
             if(!isEdit) return FMT_STATE.forEach(([k])=>$('toolbar').querySelector(`[onclick="fmt('${k}')"]`).classList.remove('on'));
             if(!sel.rangeCount) return;
             const n=nodeEl(sel.getRangeAt(0).startContainer);
@@ -673,7 +681,12 @@
             const ft=n.closest('table.wk-fit');   // 비율 고정 표는 기준 크기로 표시
             $('fontSize').value=Math.round(parseFloat(getComputedStyle(n).fontSize)*(ft?fitScale(ft):1));
             // 커서·드래그한 글씨의 글씨색·배경색을 색 버튼에 표시 (색 창을 여는 중에는 그대로)
-            if(cp.el.hidden){$('fgColor').value=toHex(getComputedStyle(n).color);$('bgColor').value=hiliteOf(n);}
+            // 선택 위치가 바뀌었을 때만 (같은 자리에서 사용자가 고른 색은 덮어쓰지 않음)
+            const r=sel.getRangeAt(0),key=[r.startContainer,r.startOffset,r.endContainer,r.endOffset];
+            if(cp.el.hidden&&!(lastColorKey&&key.every((x,i)=>x===lastColorKey[i]))){
+                lastColorKey=key;
+                $('fgColor').value=toHex(getComputedStyle(n).color);$('bgColor').value=hiliteOf(n);
+            }
             FMT_STATE.forEach(([k,cmd])=>{
                 let on=false;try{on=document.queryCommandState(cmd);}catch(e){}
                 $('toolbar').querySelector(`[onclick="fmt('${k}')"]`).classList.toggle('on',on);
@@ -1420,7 +1433,12 @@
                 const px=el=>el?Math.round(el.getBoundingClientRect()[el===row?'height':'width']):0;
                 $('tblW').value=t.style.width;
                 // 선택한 칸의 배경색·표 테두리색을 색 버튼에 표시
-                if(cp.el.hidden&&cell){$('cellBg').value=bgOf(cell.el);$('tblBorder').value=toHex(getComputedStyle(cell.el).borderTopColor);}
+                // 다른 칸을 선택했을 때만 (같은 칸에서 사용자가 고른 색은 덮어쓰지 않음)
+                const ck=cell&&[...t.querySelectorAll('td,th')].indexOf(cell.el)+':'+JSON.stringify(r);
+                if(cp.el.hidden&&cell&&(ck!==lastCellKey.k||t!==lastCellKey.t)){
+                    lastCellKey={k:ck,t};
+                    $('cellBg').value=bgOf(cell.el);$('tblBorder').value=toHex(getComputedStyle(cell.el).borderTopColor);
+                }
                 $('mergeBtn').classList.toggle('on',mergedOnly(m,r));
                 $('fitBtn').textContent=t.classList.contains('wk-fit')?'비율 고정 해제':'비율 고정';
                 $('fitBtn').classList.toggle('active',t.classList.contains('wk-fit'));
@@ -2373,9 +2391,11 @@ document.querySelectorAll('.wiki h3.sec').forEach(function(h){h.addEventListener
         });
         /* 한글 입력(조합) 중에는 문서를 건드리지 않음.
            조합 중에 목차·날짜·기록 등을 고치면 입력기가 끊겨 한/영 전환·한글 조합이 꼬일 수 있음 → 조합이 끝난 뒤 처리 */
-        let composing=false;
         wiki.addEventListener('compositionstart',()=>{composing=true;clearTimeout(hist.timer);});
-        wiki.addEventListener('compositionend',e=>{composing=false;afterTyping(e.target);scheduleRecord();});
+        wiki.addEventListener('compositionend',e=>{composing=false;afterTyping(e.target);scheduleRecord();updFmtState();});
+        // 조합이 끝났다는 확실한 신호: 조합과 무관한 키 입력(229 아님), 입력칸을 벗어남
+        wiki.addEventListener('keydown',e=>{if(composing&&!e.isComposing&&e.keyCode!==229) composing=false;},true);
+        wiki.addEventListener('focusout',()=>{composing=false;});
         function afterTyping(t){
             if(!t||!t.closest) return;
             const de=t.closest('.wiki-date');
@@ -2384,7 +2404,8 @@ document.querySelectorAll('.wiki h3.sec').forEach(function(h){h.addEventListener
             // 본문에서 각주를 지우면(Backspace·잘라내기 등) 하단 각주도 삭제하고 번호를 다시 매김
             if(!footnotesInSync()) renumberFootnotes();
         }
-        wiki.addEventListener('input',e=>{if(e.isComposing) return;composing=false;wrapStray();afterTyping(e.target);});   // 조합 끝 신호가 빠지는 브라우저 대비
+        // 조합 중의 입력은 건드리지 않음 (일부 브라우저는 조합 중에도 isComposing 을 false 로 보내므로 composing 으로도 확인)
+        wiki.addEventListener('input',e=>{if(e.isComposing||composing) return;wrapStray();afterTyping(e.target);});
         // 본문 칸에 문단 밖 글자가 생기면(블록 사이에서 바로 입력 등) 문단으로 감쌈
         function wrapStray(){
             const s=getSelection();if(!s.rangeCount) return;
