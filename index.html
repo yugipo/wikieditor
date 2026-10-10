@@ -1146,6 +1146,7 @@
             });
         }
         // 이미지 주소(URL)가 있으면 그 주소를, 없으면 파일을 사용
+        const BODY_IMG='max-width:100%;margin:20px 0;border-radius:4px;vertical-align:top;';
         async function insertImg(){
             const inp=$('imgInput'),url=$('imgUrl').value.trim();
             if(!url&&!inp.files[0]) return alert('이미지 주소를 넣거나 파일을 선택하세요');
@@ -1169,8 +1170,13 @@
                     else p.appendChild(img);
                 }
             }else{
-                img.style.cssText='display:block;max-width:100%;margin:20px 0;border-radius:4px;';
-                if(!insertBlock(img)) return;
+                // 본문: 문단 안에 넣어 문단 정렬(왼쪽·가운데·오른쪽)을 따름. 지금 문단의 정렬을 그대로 이어받음
+                img.style.cssText=BODY_IMG;
+                const p=document.createElement('p'),cur=caretHost();
+                const al=cur&&cur.tagName==='P'?cur.style.textAlign:'';if(al) p.style.textAlign=al;
+                p.appendChild(img);
+                if(!insertBlock(p)) return;
+                p.setAttribute('contenteditable',String(isEdit));
             }
             imgTarget=null;inp.value=$('imgUrl').value='';
             closeModal();
@@ -1286,7 +1292,7 @@
         function findBlock(n){
             if(!n||!n.closest||!wiki.contains(n)) return null;
             const img=n.closest('img');
-            if(img&&!img.closest('#mainImg')&&(img.closest('td,th')||inSecBody(img))) return img;
+            if(img&&!img.closest('#mainImg')&&(img.closest('td,th')||inSecBody(img)||img.parentElement.tagName==='P'&&inSecBody(img.parentElement))) return img;
             const h=n.closest('h3.sec');
             if(h) return h;
             const cat=n.closest('section > span');   // 맨 위 분류 칸
@@ -1312,7 +1318,12 @@
                 if(body) body.remove();
                 b.remove();
                 rebuildToc();
-            }else b.remove();
+            }else{
+                const pp=b.tagName==='IMG'&&b.parentElement;
+                b.remove();
+                // 이미지만 있던 문단은 함께 정리 (본문의 마지막 문단은 남김)
+                if(pp&&pp.tagName==='P'&&isBlank(pp)&&inSecBody(pp)&&pp.parentElement.querySelectorAll(':scope > p').length>1) pp.remove();
+            }
             renumberFootnotes();
             refreshCtx();
         }
@@ -1380,7 +1391,11 @@
             document.execCommand('styleWithCSS',false,true);
             if(kind==='bold'||kind==='italic'){document.execCommand(kind);return updFmtState();}
             if(kind==='strike'||kind==='underline'){document.execCommand(kind==='strike'?'strikeThrough':'underline');return updFmtState();}
-            if(ALIGN.includes(kind)) return document.execCommand('justify'+kind[0].toUpperCase()+kind.slice(1));
+            if(ALIGN.includes(kind)){
+                const ip=ctx.img&&ctx.img.isConnected&&ctx.img.closest('p,td,th');
+                if(ip){ip.style.textAlign=kind;return;}
+                return document.execCommand('justify'+kind[0].toUpperCase()+kind.slice(1));
+            }
             if(!r||r.collapsed) return alert('적용할 글씨를 드래그하거나, 표의 칸을 드래그해서 선택하세요.');
             if(kind==='fg') document.execCommand('foreColor',false,$('fgColor').value);
             if(kind==='bg'){
@@ -2249,7 +2264,12 @@ document.querySelectorAll('.wiki h3.sec').forEach(function(h){h.addEventListener
             wiki.querySelectorAll('h3.sec + div, details.wk-fold > div, div.wk-top').forEach(b=>{
                 if(b.matches('section > div:not(.wk-top)')&&!(b.previousElementSibling&&b.previousElementSibling.matches('h3.sec'))) return;
                 b.setAttribute('contenteditable',String(isEdit));
-                [...b.children].forEach(markIsland);
+                [...b.children].forEach(c=>{
+                    if(c.tagName!=='IMG') return markIsland(c);
+                    // 예전 본문 이미지(문단 밖, display:block) → 문단 안으로 옮겨 정렬을 따르게
+                    c.style.display='';c.style.verticalAlign='top';c.removeAttribute('contenteditable');delete c.dataset.island;
+                    const p=document.createElement('p');p.setAttribute('contenteditable',String(isEdit));c.replaceWith(p);p.appendChild(c);
+                });
             });
             // 주의문구: 블로그 편집기가 <mark> 안의 문단을 밖으로 빼내고 <mark>를 겹쳐 놓은 경우 다시 하나로
             for(let m;(m=wiki.querySelector('mark > mark'));) m.replaceWith(...m.childNodes);
